@@ -1,5 +1,5 @@
 # Scanlan
-Python3 program to scan your LAN and provide details about each MAC address found.
+scan_lan2.py is a Python3 command line program to scan your LAN and provide details about each MAC address found.
 
 Must run this program as root (Linux) or administrator (Windows). For Linux run:
 $ sudo python3 scan_lan2.py

@@ -9,5 +9,5 @@ You can run the program without this file to find all your MAC addresses, then p
 supplemental data for each MAC by seperating the MAC address data from the supplental data. Over time, you may have more MAC address data
 in the file (mac.txt) as the program only finds those addresses that are active at the time the program is run.
 
-The file text_table.py together with a modified version of scan_lan2.py -> scan_lan3.py produce a an output file "html-table.html".
+The file text_table.py together with a modified version of scan_lan2.py -> scan_lan3.py produce an output file "html-table.html".
 That file can easily be copied over to an web server and will display data similar to that shown from command line via scan_lan2.py

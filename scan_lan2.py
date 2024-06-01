@@ -11,13 +11,14 @@ import json
 import codecs
 import getopt,sys
 import requests
+import time
 
 myMAC = {}
 
 # Create dictionary  of my MAC Address to Descriptions (change this to match your system)
 #
 # Read MAC address supplementary data file (mac.txt) to populate the dictionary
-# Format of file is MACaddress,Detail supplementary info for that MAC, optional company 
+# Format of file is MACaddress, Detail supplementary info for that MAC, optional company 
 
 def read_mac_file(fpath):
 	cnt = 1
@@ -53,23 +54,43 @@ def read_mac_file(fpath):
 
 # Mac address to lookup vendor - REF: https://www.youtube.com/watch?v=nhC3paE_YPk,  vendor=company
 def get_co(macaddr):
-	# print('macaddr: {}'.format(macaddr))
+	# print('macaddr: {}'.format(macaddr))  ## Debug
 
 	# MAC vendor API base url, you can also use https if you need
-	url = f'https://www.macvendorlookup.com/api/v2/{macaddr}'
+	#url = f'http://www.macvendorlookup.com/api/v2/{macaddr}'   ## kept timing out 502 error - I think they have daily limits
+	url = f'https://api.maclookup.app/v2/macs/{macaddr}'  ## this site is rate limited, doesnt look like daily limits
 	
-	# print('Request: {}'.format(url))
+	# print('Request: {}'.format(url)) ## Debug
 	
 	try:
-		vendor = requests.get(url).json()
-		vendor = vendor[0]['company']
+		# rate limited, try 1 sec, for site https://api.maclookup.app/
+		time.sleep(1) # Wait for 1 sec
 		
-	except:
-		vendor = 'none'
-
-	# print("vendor = {}".format(vendor))
+		r = requests.get(url, timeout=(2)).json()
+		# print('r = {}'.format(r))  ## Debug
+		
+		company = r['company']
+		# print('company = {}'.format(company)) ## Debug
+		
+		if company == '':
+			company = 'none found'
+			
+		if r['success'] == False:
+			print('Site is rate limiting - Too Many Requests: {}'.format(url) )
+			
 	
-	return vendor
+	# except requests.exceptions.ConnectionError as errh:
+	except requests.exceptions.Timeout:
+		print('HTTP Connection Error to site {} timed out'.format(url))
+		# print(errh.args[0])
+		company = 'none'
+		
+	except requests.exceptions.ConnectionError:
+		print('HTTP Connection Error to site {} timed out'.format(url))
+		company = 'none'
+	
+	# print("company = {}".format(company)) ## Debug	
+	return company
 
 # Convert dotted decimal IP to long - ex:ip2long('192.168.1.1'):
 def ip2long(ip):
@@ -90,17 +111,21 @@ def do_arping(co):
 	print("Processing...")
 
 	# change this to match your subnet
-	ans,unans = arping("192.168.1.0/24", verbose=0)
+	ans,unans = arping("192.168.1.0/24", verbose=0, timeout=5)
 
-	# cnt = 0
+	cnt = 1
 
-	#print("----------------------------------------------------------------------------------------------")
-	#print("MAC Address" + "\t\t" + "IP Address" + "\t" + "Description" )
+	# append data from arping to my_list
 	for s,r in ans:
+		
 		if co == True:
+			print('Getting company information from site for item {}'.format(cnt))
 			try:
 				#print('{0}\t{1}\t== {2}\t** {3}' .format( r[Ether].src,s[ARP].pdst,myMAC[r[Ether].src],get_co(r[Ether].src)) )
 				my_list.append( (ip2long(s[ARP].pdst), r[Ether].src, myMAC[r[Ether].src], get_co(r[Ether].src)) )
+				# below is a debug print
+				# print('{}, {}, {}, {}'.format(ip2long(s[ARP].pdst), r[Ether].src, myMAC[r[Ether].src], get_co(r[Ether].src)))
+				
 			except KeyError:
 				print('{0}\t{1}\t== MAC Address not found in MAC Table, Please add!' .format(r[Ether].src,s[ARP].pdst) )
 		else:
@@ -109,34 +134,46 @@ def do_arping(co):
 				my_list.append( (ip2long(s[ARP].pdst), r[Ether].src, myMAC[r[Ether].src]) )
 			except KeyError:
 				print('{0}\t{1}\t== MAC Address not found in MAC Table, Please add!' .format(r[Ether].src,s[ARP].pdst) )
-		# cnt += 1
+		cnt += 1
 
-   	# sort by IP address
+   	# sort my_list by IP address
 	for aTuple in my_list:
 		my_list.sort(key=lambda tup:tup[0])
 
 	# convert long IP address to dotted decimal (done in above for loop)
 
-	# print results
+	# print my_list sorted results
 	cnt = 0
 	print("----------------------------------------------------------------------------------------------")
+	
 	# Print the column headers
+	t1 = "IP Address"
+	t2 = "MAC Address"
+	t3 = "Description"
+	t4 = "Company"
+	
 	if co == True:
-		print("IP Address" + "\t" + "MAC Address" + "\t\t" + "Description" + "\t\t\t\t\t" + "** Company Info")
+		print(f'{t1 : <19}{t2 : <20}{t3 : <60}{t4 : <40}')
 	else:
-		print("IP Address" + "\t" + "MAC Address" +" \t\t" + "Description" )
+		print(f'{t1 : <19}{t2 : <20}{t3 : <60}')
 
-	# Print the row data
+	# print the row data
 	for aTuple in my_list:
+		i1 = str( long2ip(aTuple[0]) )
+		i2 = str( aTuple[1] )
+		i3 = str( aTuple[2] )
+		
 		if co == True:
-			print('{0}\t{1}\t{2}\t** {3}' .format(long2ip(aTuple[0]),aTuple[1],aTuple[2],aTuple[3]) )
+			i4 = str( aTuple[3] )
+			print(f'{i1 : <19}{i2 : <20}{i3 : <60}{i4 : <40}')
 		else:
-			print('{0}\t{1}\t{2}' .format(long2ip(aTuple[0]),aTuple[1],aTuple[2]) )
+			print(f'{i1 : <19}{i2 : <20}{i3 : <60}')
+
 
 		cnt += 1
 	print('{0} Hosts found!' .format(cnt) )
 
-	#print('*******************************')
+	#print('*******************************')  ## Debug
 	return True
 
 

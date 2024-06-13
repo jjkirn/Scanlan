@@ -1,4 +1,4 @@
-# Python 3
+#!/usr/bin/python3
 #
 # JJKirn 2/8/2020, updated 6/1/2024
 #

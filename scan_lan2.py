@@ -1,8 +1,7 @@
-# Python 3
+#!usr/bin/python3
 #
 # JJKirn 2/8/2020, updated 6/1/2024
 #
-
 from builtins import *
 from scapy.all import *
 from socket import inet_aton,inet_ntoa
@@ -13,17 +12,17 @@ import getopt,sys
 import requests
 import time
 
-myMAC = {}
+myMAC = {}	## Global empty dictionary
+version = "3.3"
+subnet = "192.168.1.0/24"  ## subnet to scan - change this to match your subnet
 
-# Create dictionary  of my MAC Address to Descriptions (change this to match your system)
-#
-# Read MAC address supplementary data file (mac.txt) to populate the dictionary
-# Format of file is MACaddress, Detail supplementary info for that MAC, optional company 
-
+# Create a dictionary of my MAC Address to Descriptions 
+# Read MAC address supplementary data file (mac.txt) to populate the dictionary (change mac.txt to match your system)
+# Format of the file is MACaddress, Detail supplementary info for that MAC, optional company 
 def read_mac_file(fpath):
 	cnt = 1
 
-	# print('fpath = {}'.format(fpath))
+	# print('fpath = {}'.format(fpath))	## Debug
 
 	try:
 		with open (fpath) as f:
@@ -44,7 +43,6 @@ def read_mac_file(fpath):
 	except IOError:
 		print('File {0} not accessible' .format(fpath) )
 
-	#
 	print('{0} MAC addresses read in from detail data File ({1})' .format(cnt, fpath) )
 
 	# disable scapy promiscuous mode (not sure this is needed)
@@ -52,7 +50,7 @@ def read_mac_file(fpath):
 
 	return(True)
 
-# Mac address to lookup vendor - REF: https://www.youtube.com/watch?v=nhC3paE_YPk,  vendor=company
+# Mac address to vendor (company) lookup - REF: https://www.youtube.com/watch?v=nhC3paE_YPk -> vendor=company
 def get_co(macaddr):
 	# print('macaddr: {}'.format(macaddr))  ## Debug
 
@@ -69,6 +67,7 @@ def get_co(macaddr):
 		r = requests.get(url, timeout=(2)).json()
 		# print('r = {}'.format(r))  ## Debug
 		
+		# Below is dependent on the values (JSON) returned from the url. If you change the url, you may need to change the below
 		company = r['company']
 		# print('company = {}'.format(company)) ## Debug
 		
@@ -78,13 +77,11 @@ def get_co(macaddr):
 		if r['success'] == False:
 			print('Site is rate limiting - Too Many Requests: {}'.format(url) )
 			
-	
-	# except requests.exceptions.ConnectionError as errh:
 	except requests.exceptions.Timeout:
 		print('HTTP Connection Error to site {} timed out'.format(url))
-		# print(errh.args[0])
 		company = 'none'
-		
+
+	# except requests.exceptions.ConnectionError as errh:
 	except requests.exceptions.ConnectionError:
 		print('HTTP Connection Error to site {} timed out'.format(url))
 		company = 'none'
@@ -111,7 +108,8 @@ def do_arping(co):
 	print("Processing...")
 
 	# change this to match your subnet
-	ans,unans = arping("192.168.1.0/24", verbose=0, timeout=5)
+	mysub = subnet
+	ans,unans = arping(mysub, verbose=0, timeout=15)
 
 	cnt = 1
 
@@ -132,6 +130,7 @@ def do_arping(co):
 			try:
 				#print('{0}\t{1}\t== {2}' .format( r[Ether].src,s[ARP].pdst,myMAC[r[Ether].src] ) )
 				my_list.append( (ip2long(s[ARP].pdst), r[Ether].src, myMAC[r[Ether].src]) )
+				
 			except KeyError:
 				print('{0}\t{1}\t== MAC Address not found in MAC Table, Please add!' .format(r[Ether].src,s[ARP].pdst) )
 		cnt += 1
@@ -207,7 +206,7 @@ def main(argv):
 			co = True
 
 		if opt in ('-v','--version'):
-			print('Version 3.1')
+			print('Version {}'.format(version))
 			sys.exit(2)
 
 	read_mac_file(fpath)

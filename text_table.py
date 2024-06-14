@@ -37,13 +37,13 @@ table += '\t\t\tmargin=right: auto;\n'
 table += '\t\t\tfont-size: 20px;\n'
 table += '\t\t\theight: 100%;\n'
 table += '\t\t\ttable-layout: fixed;\n'
-table += '}\n'
+table += '\t\t}\n'
 #
 table += '\t\ttd {\n'
 table += '\t\t\tborder: 1px solid black;\n'
 table += '\t\t\ttext-align: center;\n'
 table += '\t\t\tpadding: 10px;\n'
-table += '\t\t\t}\n'
+table += '\t\t}\n'
 #
 table += '\t\ttr:nth-child(even) {\n'
 table += '\t\t\tbackground-color: #00cf45;\n'
@@ -88,13 +88,14 @@ for line in data[1:]:
     table += "\t\t\t</tr>\n"
 table += "\t\t</table>\n"
 table += "\t</center>\n"
-table += '</body>'
+table += '</body>\n'
 
-## Show total number of MAC addresses found
+## Show total number of MAC addresses found, end the html
 table += '<br>\n'
 table += '<b>Total MAC addesses found {0}</b>\n' .format(mycnt)
+table += '</html>'
 
-## Write output data to file (html-table.html)!
+## Write output data to webpage file (html-table.html)!
 try:
    with open (outfile,'w') as fileout:
       fileout.writelines(table)

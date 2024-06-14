@@ -160,7 +160,7 @@ def do_arping(co):
 	# print the row data
 	for aTuple in my_list:
 		if co == True:
-			myString += ('{0},{1},{2},{3}\n' .format(long2ip(aTuple[0]),aTuple[1],aTuple[2],aTuple[3]) )
+			myString += ('{0},{1},{2},{3}\n' .format(long2ip(aTuple[0]),aTuple[1],aTuple[2],aTuple[3].replace(',', '')) )
 		else:
 			myString += ('{0},{1},{2}\n' .format(long2ip(aTuple[0]),aTuple[1],aTuple[2]) )
 

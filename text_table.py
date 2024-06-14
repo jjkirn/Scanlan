@@ -9,8 +9,8 @@
 import sys
 import time
 
-infile = '/opt/scanlan/data.txt'
-outfile = '/opt/scanlan/html-table.html'
+infile = '/dev/shm/data.txt'
+outfile = '/dev/shm/html-table.html'
 
 # Process open of input file
 try:
@@ -32,7 +32,7 @@ table += '<title>SCAN_LAN REPORT</title>\n'
 table += '<style>\n'
 table += 'table {\n'
 table += '\ttable-layout: auto;\n'
-table += '\twidth: 700px;\n'
+table += '\twidth: 1300px;\n'
 table += '}\n'
 table += '</style>\n'
 table += '</head>\n'
@@ -45,8 +45,8 @@ header = data[0].split(",")
 # Create all header row data
 table += "  <tr>\n"
 for column in header:
-    table += "    <th>{0}</th>\n".format(column.strip())
-table += "  </tr>\n"
+    table += " <th>{0}</th>\n".format(column.strip())
+table += " </tr>\n"
 # Create the table's row data
 mycnt = 0
 for line in data[1:]:
@@ -54,9 +54,10 @@ for line in data[1:]:
     row = line.split(",")
     table += "  <tr>\n"
     for column in row:
-        table += "    <td>{0}</td>\n".format(column.strip())
+        table += " <td>{0}</td>\n".format(column.strip())
     table += "  </tr>\n"
 table += "</table>\n"
+
 # Show total number of MAC addresses found
 table += '<br>\n'
 table += '<b>Total MAC addesses found {0}</b>\n' .format(mycnt)

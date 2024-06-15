@@ -16,9 +16,9 @@ myMAC = {}	## Global empty dictionary
 version = "3.3"
 subnet = "192.168.1.0/24"  ## subnet to scan - change this to match your subnet
 
-# Create a dictionary of my MAC Address to Descriptions 
+# Create a dictionary of my MAC Address to Descriptions
 # Read MAC address supplementary data file (mac.txt) to populate the dictionary (change mac.txt to match your system)
-# Format of the file is MACaddress, Detail supplementary info for that MAC, optional company 
+# Format of the file is MACaddress, Detail supplementary info for that MAC, optional company
 def read_mac_file(fpath):
 	cnt = 1
 
@@ -37,9 +37,9 @@ def read_mac_file(fpath):
 
 				except ValueError:
 					print('MAC address local detail data File ({0}) - Bad Line - {1}' .format(fpath, cnt) )
-				
+
 				cnt = cnt + 1
-				
+
 	except IOError:
 		print('File {0} not accessible' .format(fpath) )
 
@@ -57,26 +57,26 @@ def get_co(macaddr):
 	# MAC vendor API base url, you can also use https if you need
 	#url = f'http://www.macvendorlookup.com/api/v2/{macaddr}'   ## kept timing out 502 error - I think they have daily limits
 	url = f'https://api.maclookup.app/v2/macs/{macaddr}'  ## this site is rate limited, doesnt look like daily limits
-	
+
 	# print('Request: {}'.format(url)) ## Debug
-	
+
 	try:
 		# rate limited, try 1 sec, for site https://api.maclookup.app/
 		time.sleep(1) # Wait for 1 sec
-		
+
 		r = requests.get(url, timeout=(2)).json()
 		# print('r = {}'.format(r))  ## Debug
-		
+
 		# Below is dependent on the values (JSON) returned from the url. If you change the url, you may need to change the below
 		company = r['company']
 		# print('company = {}'.format(company)) ## Debug
-		
+
 		if company == '':
 			company = 'none found'
-			
+
 		if r['success'] == False:
 			print('Site is rate limiting - Too Many Requests: {}'.format(url) )
-			
+
 	except requests.exceptions.Timeout:
 		print('HTTP Connection Error to site {} timed out'.format(url))
 		company = 'none'
@@ -85,8 +85,8 @@ def get_co(macaddr):
 	except requests.exceptions.ConnectionError:
 		print('HTTP Connection Error to site {} timed out'.format(url))
 		company = 'none'
-	
-	# print("company = {}".format(company)) ## Debug	
+
+	# print("company = {}".format(company)) ## Debug
 	return company
 
 # Convert dotted decimal IP to long - ex:ip2long('192.168.1.1'):
@@ -103,7 +103,7 @@ def long2ip(lng):
 
 # Use arping to collect all tha MAC addresses on the LAN
 def do_arping(co):
-	
+
 	my_list = []
 	print("Processing...")
 
@@ -115,7 +115,7 @@ def do_arping(co):
 
 	# append data from arping to my_list
 	for s,r in ans:
-		
+
 		if co == True:
 			print('Getting company information from site for item {}'.format(cnt))
 			try:
@@ -123,14 +123,14 @@ def do_arping(co):
 				my_list.append( (ip2long(s[ARP].pdst), r[Ether].src, myMAC[r[Ether].src], get_co(r[Ether].src)) )
 				# below is a debug print
 				# print('{}, {}, {}, {}'.format(ip2long(s[ARP].pdst), r[Ether].src, myMAC[r[Ether].src], get_co(r[Ether].src)))
-				
+
 			except KeyError:
 				print('{0}\t{1}\t== MAC Address not found in MAC Table, Please add!' .format(r[Ether].src,s[ARP].pdst) )
 		else:
 			try:
 				#print('{0}\t{1}\t== {2}' .format( r[Ether].src,s[ARP].pdst,myMAC[r[Ether].src] ) )
 				my_list.append( (ip2long(s[ARP].pdst), r[Ether].src, myMAC[r[Ether].src]) )
-				
+
 			except KeyError:
 				print('{0}\t{1}\t== MAC Address not found in MAC Table, Please add!' .format(r[Ether].src,s[ARP].pdst) )
 		cnt += 1
@@ -145,13 +145,13 @@ def do_arping(co):
 	cnt = 0
 	myString = ''
 	print("----------------------------------------------------------------------------------------------")
-	
+
 	# Print the column headers
 	t1 = "IP Address"
 	t2 = "MAC Address"
 	t3 = "Description"
 	t4 = "Company"
-	
+
 	if co == True:
 		myString = "IP Address" + "," + "MAC Address" + "," + "Description" + "," + "Company\n"
 	else:
@@ -165,7 +165,7 @@ def do_arping(co):
 			myString += ('{0},{1},{2}\n' .format(long2ip(aTuple[0]),aTuple[1],aTuple[2]) )
 
 		cnt += 1
-	
+
 	print(myString)
 	# Write data to file in comma seperated format
 	write_string(myString)
@@ -199,7 +199,7 @@ def usage():
 def main(argv):
 	co = False
 	fpath = 'mac.txt'
-	
+
 	try:
 		opts, args = getopt.getopt(argv,'hcv',['help','company','version'])
 
